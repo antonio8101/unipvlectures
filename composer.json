@@ -11,6 +11,13 @@
             "Unipvlectures\\": "src/"
         }
     },
+    "extra": {
+    "laravel": {
+        "providers": [
+            "UnipvLecturers\\Providers\\UnipvLecturerProvider "
+        ]
+    }
+    },
     "authors": [
         {
             "name": "Antonio Bruno",
