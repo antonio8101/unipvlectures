@@ -8,13 +8,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Unipvlectures\\": "src/"
+            "UnipvLecturers\\": "src/"
         }
     },
     "extra": {
     "laravel": {
         "providers": [
-            "Unipvlectures\\Providers\\UnipvLecturerProvider"
+            "UnipvLecturers\\Providers\\UnipvLecturerProvider"
         ]
     }
     },
