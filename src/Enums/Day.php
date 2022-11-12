@@ -1,6 +1,6 @@
 <?php
 
-namespace UnipvLecturers\Enums;
+namespace UnipvLectures\Enums;
 
 enum Day : string {
 

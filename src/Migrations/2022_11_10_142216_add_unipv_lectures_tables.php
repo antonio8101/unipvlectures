@@ -3,8 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use UnipvLecturers\Models\Lecturer;
-use UnipvLecturers\Models\TeacherLesson;
+use UnipvLectures\Models\Lecture;
+use UnipvLectures\Models\TeacherCourse;
 
 return new class extends Migration
 {
@@ -15,7 +15,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('lecturers', function (Blueprint $table) {
+        Schema::create('lectures', function (Blueprint $table) {
             $table->id();
 
             $table->string('code')->nullable();
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->string('room');
             $table->string('course');
 
-            $table->unsignedBigInteger('lesson_id')->nullable();
+            $table->unsignedBigInteger('course_id')->nullable();
 
             $table->timestamps();
         });
@@ -42,7 +42,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('lessons', function (Blueprint $table) {
+        Schema::create('courses', function (Blueprint $table) {
             $table->id();
 
             $table->string('name');
@@ -51,18 +51,18 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('teacher_lessons', function (Blueprint $table) {
+        Schema::create('teacher_courses', function (Blueprint $table) {
             $table->id();
 
             $table->unsignedBigInteger('teacher_id');
-            $table->unsignedBigInteger('lesson_id');
+            $table->unsignedBigInteger('course_id');
 
             $table->timestamps();
         });
 
-        Lecturer::addConstraints();
+        Lecture::addConstraints();
 
-        TeacherLesson::addConstraints();
+	    TeacherCourse::addConstraints();
     }
 
     /**
@@ -72,16 +72,16 @@ return new class extends Migration
      */
     public function down()
     {
-        Lecturer::removeConstraints();
+        Lecture::removeConstraints();
 
-        TeacherLesson::removeConstraints();
+	    TeacherCourse::removeConstraints();
 
-        Schema::dropIfExists('lecturers');
+        Schema::dropIfExists('lectures');
 
-        Schema::dropIfExists('teacher_lessons');
+        Schema::dropIfExists('teacher_courses');
 
         Schema::dropIfExists('teachers');
 
-        Schema::dropIfExists('lessons');
+        Schema::dropIfExists('courses');
     }
 };

@@ -1,9 +1,9 @@
 <?php
 
-namespace UnipvLecturers\Utils;
+namespace UnipvLectures\Utils;
 
-use UnipvLecturers\Enums\Day;
-use UnipvLecturers\Enums\Time;
+use UnipvLectures\Enums\Day;
+use UnipvLectures\Enums\Time;
 
 class Helper {
 

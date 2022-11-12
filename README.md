@@ -15,7 +15,7 @@ Once the package is installed package assets must be published by using the arti
 
 ```console
 
-php artisan vendor:publish --provider UnipvLecturers\Providers\UnipvLecturerProvider
+php artisan vendor:publish --provider UnipvLectures\Providers\UnipvLecturerProvider
 
 ```
 
@@ -31,7 +31,7 @@ Go to the file ```config/app.php```.
    /*
    * Package Service Providers...
    */
-   UnipvLecturers\Providers\UnipvLecturerProvider::class,
+   UnipvLectures\Providers\UnipvLectureProvider::class,
 
    // other Service Providers...
    
@@ -47,12 +47,66 @@ php artisan migrate
 
 ```
 
-Migration will create ```lectures, lessons, teachers, teacher_lessons``` in your database.
+Migration will create ```lectures, courses, teachers, teacher_courses``` in your database.
 Once table are created command ```unipv:import-lectures``` must be called.
+
+Provide then the right configuration in ```config/unipvlectures.php```, variables ```courses_urls``` and ```lectures_urls```.
 
 ```console
 
-php artisan unipv:import-lectures
+php artisan unipv:lecturer-import
 
 ```
 
+Wait till the command ends the import.
+
+After data is imported you can start by creating a ```blade template```. Once it has been created provide its name still in the configuration  ```config/unipvlectures.php```,  ```template```.
+
+
+```php
+
+  return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Template
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the template used by the root to display data.
+    |
+    */
+
+    'template' => '',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Urls used to retrieve Classes
+    |--------------------------------------------------------------------------
+    |
+    | This option sets the url where to retrieve course names.
+    |
+    */
+
+    'courses_urls' => [],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Urls used to retrieve Lecturers
+    |--------------------------------------------------------------------------
+    |
+    | This option sets the url where to retrieve the lectures.
+    |
+    */
+
+    'lectures_urls' => [],
+];
+
+```
+
+To see the timetable open the linK:
+
+```
+
+http://localhost:8000/lectures
+
+```

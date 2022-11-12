@@ -1,10 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Config;
-use UnipvLecturers\Enums\Day;
-use UnipvLecturers\Enums\Time;
-use UnipvLecturers\Utils\Helper;
-use UnipvLecturers\Models\Lecturer;
+use UnipvLectures\Enums\Day;
+use UnipvLectures\Enums\Time;
+use UnipvLectures\Utils\Helper;
+use UnipvLectures\Models\Lecture;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
@@ -14,22 +14,22 @@ use Illuminate\Support\Facades\View;
  * Routes for lecturers
  * @prefix lecturers
  */
-Route::prefix('/lecturers')->group(function (){
+Route::prefix('/lectures')->group(function (){
 
-    $view = Config::get('unipvlecturers.template');
+    $view = Config::get('unipvlectures.template');
 
     Route::get( '/', function () use ( $view ) {
 
-        $data = Lecturer::with( [ 'info' => fn( $q ) => $q->with( 'teachers' ) ] )
-                        ->get()
-                        ->map( function ($i) {
+        $data = Lecture::with( [ 'info' => fn( $q ) => $q->with( 'teachers' ) ] )
+                       ->get()
+                       ->map( function ($i) {
                             $i->day_order = Helper::toDayOrderNumber($i->day);
                             return $i;
                         } )
-                        ->sortBy( fn ($i) => $i->time )
-                        ->sortBy( fn ($i) => $i->day_order );
+                       ->sortBy( fn ($i) => $i->time )
+                       ->sortBy( fn ($i) => $i->day_order );
 
-        $courses = Lecturer::getLecturesDistinctNames();
+        $courses = Lecture::getLecturesDistinctNames();
 
         if ( ! View::exists($view) )
             return $data;
@@ -43,7 +43,7 @@ Route::prefix('/lecturers')->group(function (){
 
     Route::get( '/{dayOrSlug}', function ( mixed $dayOrSlug ) use ($view) {
 
-        $data = Lecturer::where(function (Builder $query) use ($dayOrSlug){
+        $data = Lecture::where(function (Builder $query) use ($dayOrSlug){
 
             $d = Day::tryFrom( $dayOrSlug );
 
@@ -53,7 +53,7 @@ Route::prefix('/lecturers')->group(function (){
 
             return $query->where('slug', $dayOrSlug);
         })->with( [ 'info' => fn( $q ) => $q->with( 'teachers' ) ] )
-                        ->get()
+                       ->get()
                         ->map( function ($i) {
                             $i->day_order = Helper::toDayOrderNumber($i->day);
                             return $i;
@@ -65,8 +65,8 @@ Route::prefix('/lecturers')->group(function (){
         $d = Day::tryFrom( $dayOrSlug );
 
         $courses = ($d instanceof Day) ?
-            Lecturer::getLecturesDistinctNames($d) :
-            Lecturer::getLecturesDistinctNames();
+            Lecture::getLecturesDistinctNames($d) :
+            Lecture::getLecturesDistinctNames();
 
         if ( ! View::exists($view) )
             return $data;
@@ -80,8 +80,8 @@ Route::prefix('/lecturers')->group(function (){
 
     Route::get( '/{day}/{slug}', function ( Day $day, string $secondValue ) use ($view) {
 
-        $data = Lecturer::where( 'day', $day->name )
-                        ->where( function ( Builder $query ) use ( $secondValue ) {
+        $data = Lecture::where( 'day', $day->name )
+                       ->where( function ( Builder $query ) use ( $secondValue ) {
 
                             $d = Time::tryFrom( $secondValue );
 
@@ -107,7 +107,7 @@ Route::prefix('/lecturers')->group(function (){
 
         if ( $time instanceof Time ) {
 
-            $courses = Lecturer::getLecturesByDayAndTimeDistinctNames($day, $time);
+            $courses = Lecture::getLecturesByDayAndTimeDistinctNames($day, $time);
 
             $data['time'] = $time;
             $data['courses'] = $courses;
@@ -122,8 +122,8 @@ Route::prefix('/lecturers')->group(function (){
 
     Route::get( '/{day}/{time}/{slug}', function ( Day $day, Time $time, string $name ) use ($view) {
 
-        $data = Lecturer::where( 'day', $day->name )
-                        ->where( function ( Builder $query ) use ( $time, $name ) {
+        $data = Lecture::where( 'day', $day->name )
+                       ->where( function ( Builder $query ) use ( $time, $name ) {
 
                             if ( $time instanceof Time ) {
 
@@ -141,7 +141,7 @@ Route::prefix('/lecturers')->group(function (){
                         ->orderBy( 'name' )
                         ->get();
 
-        $courses = Lecturer::getLecturesDistinctNames($day);
+        $courses = Lecture::getLecturesDistinctNames($day);
 
         if ( ! View::exists($view) )
             return $data;

@@ -1,6 +1,6 @@
 <?php
 
-namespace UnipvLecturers\Models;
+namespace UnipvLectures\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string $code
  * @method static where( string $string, string $name )
  */
-class Lesson extends Model
+class Course extends Model
 {
     use HasFactory;
 
@@ -24,7 +24,7 @@ class Lesson extends Model
 
     public static function create( string $name ): void {
 
-        $lesson = new Lesson();
+        $lesson = new Course();
 
         $lesson->code = self::getCode( $name );
         $lesson->name = $name;
@@ -39,27 +39,27 @@ class Lesson extends Model
 
     }
 
-    public static function getOne(string $name): Lesson | null {
+    public static function getOne(string $name): Course | null {
 
-        return Lesson::where( 'name', $name )->first();
+        return Course::where( 'name', $name )->first();
 
     }
 
-    public static function getOneByCode(string $code): Lesson | null {
+    public static function getOneByCode(string $code): Course | null {
 
-        return Lesson::where( 'code', $code )->first();
+        return Course::where( 'code', $code )->first();
 
     }
 
     public static function exists(string $name): bool{
 
-        return ! is_null(Lesson::getOne($name));
+        return ! is_null(Course::getOne($name));
 
     }
 
-    public function lecturers(): BelongsToMany {
+    public function lectures(): BelongsToMany {
 
-        return $this->belongsToMany( Lecturer::class );
+        return $this->belongsToMany( Lecture::class );
 
     }
 
@@ -67,8 +67,8 @@ class Lesson extends Model
 
         return $this->hasManyThrough(
             Teacher::class,
-            TeacherLesson::class,
-        'lesson_id',
+            TeacherCourse::class,
+        'course_id',
         'id',
         'id',
         'teacher_id');

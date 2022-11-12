@@ -1,17 +1,17 @@
 <?php
 
-namespace UnipvLecturers\Commands;
+namespace UnipvLectures\Commands;
 
 use Closure;
 use Illuminate\Console\Command;
 use RoachPHP\Roach;
-use UnipvLecturers\Models\Lecturer;
-use UnipvLecturers\Models\Lesson;
-use UnipvLecturers\Models\Teacher;
-use UnipvLecturers\Models\TeacherLesson;
-use UnipvLecturers\Spiders\UniPvEngineeringClassesSpider;
-use UnipvLecturers\Spiders\UniPvEngineeringCoursesSpider;
-use UnipvLecturers\Spiders\UniPvEngineeringTeacherEmailSpider;
+use UnipvLectures\Models\Lecture;
+use UnipvLectures\Models\Course;
+use UnipvLectures\Models\Teacher;
+use UnipvLectures\Models\TeacherCourse;
+use UnipvLectures\Spiders\UniPvEngineeringCoursesSpider;
+use UnipvLectures\Spiders\UniPvEngineeringLecturesSpider;
+use UnipvLectures\Spiders\UniPvEngineeringTeacherEmailSpider;
 
 class RunLecturerDataImport extends Command {
 	/**
@@ -41,11 +41,11 @@ class RunLecturerDataImport extends Command {
 
 		$this->executeOperation( 'cleaning DB', fn() => $this->truncateTables(), $skipCleaningOperation );
 
-		$this->executeOperation( 'import classes', fn() => Roach::startSpider( UniPvEngineeringClassesSpider::class ) );
+		$this->executeOperation( 'import courses', fn() => Roach::startSpider( UniPvEngineeringCoursesSpider::class ) );
 
 		$this->executeOperation( 'import teacher email', fn() => Roach::startSpider( UniPvEngineeringTeacherEmailSpider::class ) );
 
-		$this->executeOperation( 'import lecturers', fn() => Roach::startSpider( UniPvEngineeringCoursesSpider::class ) );
+		$this->executeOperation( 'import lectures', fn() => Roach::startSpider( UniPvEngineeringLecturesSpider::class ) );
 
 		return Command::SUCCESS;
 	}
@@ -68,15 +68,15 @@ class RunLecturerDataImport extends Command {
 
 	private function truncateTables(): void {
 
-		TeacherLesson::removeConstraints();
-		Lecturer::removeConstraints();
+		TeacherCourse::removeConstraints();
+		Lecture::removeConstraints();
 
-		TeacherLesson::query()->truncate();
-		Lecturer::query()->truncate();
-		Lesson::query()->truncate();
+		TeacherCourse::query()->truncate();
+		Lecture::query()->truncate();
+		Course::query()->truncate();
 		Teacher::query()->truncate();
 
-		Lecturer::addConstraints();
-		TeacherLesson::addConstraints();
+		Lecture::addConstraints();
+		TeacherCourse::addConstraints();
 	}
 }
