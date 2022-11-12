@@ -1,32 +1,37 @@
 <?php
 
-namespace UnipvLecturers\Spiders;
+namespace UnipvLectures\Spiders;
 
-use Generator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use RoachPHP\Http\Request;
+use UnipvLectures\Models\Course;
+use UnipvLectures\Models\TeacherCourse;
+use Exception;
+use Generator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RoachPHP\Downloader\Middleware\RequestDeduplicationMiddleware;
 use RoachPHP\Extensions\LoggerExtension;
 use RoachPHP\Extensions\StatsCollectorExtension;
-use RoachPHP\Http\Request;
 use RoachPHP\Http\Response;
 use RoachPHP\ItemPipeline\ItemInterface;
 use RoachPHP\ItemPipeline\Processors\ItemProcessorInterface;
 use RoachPHP\Spider\BasicSpider;
 use RoachPHP\Support\Configurable;
 use Symfony\Component\DomCrawler\Crawler;
-use UnipvLecturers\Models\Lecturer;
-use UnipvLecturers\Models\Lesson;
-use UnipvLecturers\Utils\Helper;
 
-class UniPvEngineeringCoursesSpider extends BasicSpider {
-
+/**
+ * Create Teacher
+ * Create Class
+ * Create Teacher-Class intermediate entity
+ */
+class UniPvEngineeringCoursesSpider extends BasicSpider
+{
     protected function initialRequests(): array
     {
         $requests = [];
 
-        $urls = Config::get('unipvlecturers.lecturers_urls') ?? [];
+        $urls = Config::get('unipvlectures.courses_urls') ?? [];
 
         foreach ($urls as $url){
 
@@ -50,7 +55,11 @@ class UniPvEngineeringCoursesSpider extends BasicSpider {
     ];
 
     public array $itemProcessors = [
-        SaveToDatabaseLectureProcessor::class
+        BreakLineItemProcessor::class,
+        GetClassNameFromInternalNodeItemProcessor::class,
+        FormatTeachersNodeInternalNodeItemProcessor::class,
+        SaveTeacherItemProcessor::class,
+        SaveLessonItemProcessor::class
     ];
 
     public array $extensions = [
@@ -62,149 +71,243 @@ class UniPvEngineeringCoursesSpider extends BasicSpider {
 
     public int $requestDelay = 1;
 
-    /**
-     * @param Response $response
-     *
-     * @return Generator
-     */
     public function parse( Response $response ): Generator {
-
-        $course = $response->filter( 'h1' )->text();
-
-        $timeSlotGroups = $this->getTimeSlotGroup( $response, $course );
-        $timeSlotGroups = array_filter( $timeSlotGroups, fn( $i ) => ! is_null( $i ) );
-        $lecturers = $this->flattenGroups( $timeSlotGroups );
-
-        foreach ($lecturers as $lecturer){
-            yield $this->item( [ $lecturer ] );
-        }
-    }
-
-    private array $timeSlots = Helper::LECTURERS_TIME_SLOTS;
-
-    private array $daySlots = [
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday'
-    ];
-
-    private function flattenGroups( array $daySlotGroups ): Collection {
-        $dayLessons = collect();
-
-        foreach ( $daySlotGroups as $dg ) {
-            $dayLessons = $dayLessons->concat( $dg );
-        }
-
-        return $dayLessons;
-    }
-
-    private function getTimeSlotGroup( Response $response, string $course ): array {
-        return $response->filter( 'table tr:not(tr:first-child)' )->each( function ( Crawler $tableRowNode, $l ) use ( $course ) {
-
-            if ( strlen( $tableRowNode->text() ) < 1 ) {
-                return null;
-            }
-
-            $time = $this->timeSlots[ $l ];
-
-            $daySlotGroups = $this->getDaySlotGroups( $tableRowNode, $time, $course );
-
-            return $this->flattenGroups( $daySlotGroups );
+        $nodes = $response->filter( '.page h2+p' )->each( function ( Crawler $node ) {
+            return $node;
         } );
-    }
 
-    private function getDaySlotGroups( Crawler $tableRowNode, string $time, string $course ): array {
-
-        $daySlots = $this->daySlots;
-
-        return $tableRowNode->children( 'td:not(td:first-child)' )->each( function ( Crawler $crawler, $i ) use ( $time, $daySlots, $course ) {
-
-            $crawler->text();
-            $htmlContent = $crawler->html();
-
-            $separator = 'mso-spacerun';
-
-            $contents = explode( '<br>', $htmlContent );
-
-            $timeLessonsGroup = collect( [] );
-
-            foreach ( $contents as $content ) {
-
-                $lesson = trim( Str::before( $content, $separator ) );
-                $lesson = Str::substr( $lesson, 0, Str::length( $lesson ) - 13 );
-                $room   = trim( Str::after( $content, $separator ) );
-                $room   = trim( Str::after( $room, '-' ) );
-                $room   = Str::replace('spacerun:yes">  </span>- ', '', $room);
-
-                if ( strlen( $lesson ) < 3 ) {
-                    continue;
-                }
-
-                $lessonItem = $this->buildLessonItem( $daySlots[ $i ], $time, $lesson, $room, $course );
-
-                $timeLessonsGroup->push( $lessonItem );
-            }
-
-            return $timeLessonsGroup;
-        } );
-    }
-
-    private function buildLessonItem( $day, $time, $title, $room, $course ): Lecture {
-
-        $lecture = new Lecture();
-
-        $lecture->daySlot = $day;
-        $lecture->timeSlot = $time;
-        $title = str_replace (array("\r\n", "\n", "\r"), '', $title);
-        $title = str_replace ('  ', ' ', $title);
-        $lecture->name = $title;
-        $lecture->room = $room;
-        $course = str_replace(' ', ' ', $course);
-        $lecture->course = $course;
-
-        return $lecture;
+        foreach ( $nodes as $node ) {
+            yield $this->item( [
+                $node
+            ] );
+        }
     }
 }
 
-class Lecture {
 
-    public string $daySlot;
-    public string $timeSlot;
-    public string $name;
-    public string $room;
-    public string $course;
-
-}
-
-class SaveToDatabaseLectureProcessor implements ItemProcessorInterface{
+class BreakLineItemProcessor implements ItemProcessorInterface{
 
     use Configurable;
 
     public function processItem( ItemInterface $item ): ItemInterface {
 
-        $lecture = $this->getLecture( $item );
+        $node = $this->getNode($item);
 
-        $lessonCode = Lesson::getCode( $lecture->name );
-        $lesson     = Lesson::getOneByCode( $lessonCode ) ?? new Lesson();
-        $lesson_id  = $lesson->id;
+        $node = $node->html();
 
-        Lecturer::createLecturer(
-            $lecture->daySlot,
-            $lecture->timeSlot,
-            $lecture->name,
-            $lecture->room,
-            $lecture->course,
-            $lesson_id
-        );
+        $itemInternalNodes = [];
+
+        foreach (explode('<br>', $node) as $nodePart){
+
+            $itemInternalNodes[] = new Crawler($nodePart);
+
+        }
+
+        $item->set('internal_nodes', $itemInternalNodes);
+
 
         return $item;
     }
 
-    private function getLecture( mixed $item ): Lecture {
+    private function getNode( mixed $item ): Crawler {
 
         return $item[0];
 
     }
+}
+
+class GetClassNameFromInternalNodeItemProcessor implements  ItemProcessorInterface{
+
+    use Configurable;
+
+    public function processItem( ItemInterface $item ): ItemInterface {
+
+        $internal_nodes_separated = [];
+        $counter = 0;
+
+        foreach ($item['internal_nodes'] as $internal_node){
+
+            $node_html_value = $internal_node->html();
+
+            if (Str::contains($node_html_value, '<a name')){
+                unset($internal_node);
+                continue;
+            }
+
+            $node_html_value = Str::replace('(n.d.)', '', $node_html_value);
+            $node_html_value = Str::replace('(Nonlinear Part)', '- Nonlinear Part', $node_html_value);
+            $node_html_value = Str::replace('(Optimization Part)', '- Optimization Part', $node_html_value);
+
+            $class_name = Str::before($node_html_value, " (");
+            $class_name = str_replace('<body><p>', '', $class_name);
+            $internal_nodes_separated[$counter]['class_name'] = $class_name;
+
+            $teachers = Str::after($node_html_value, " (");
+            $teachers = str_replace(")", '', $teachers);
+            $teachers = str_replace("</p></body>", '', $teachers);
+            $teachers = explode(',', $teachers);
+            $internal_nodes_separated[$counter]['teachers'] = $teachers;
+
+            $counter++;
+        }
+
+        $internal_nodes_separated = array_filter($internal_nodes_separated, function ($nodeValueItem){
+
+            if (count($nodeValueItem) > 0){
+                return true;
+            }
+
+            return false;
+        });
+
+        $item->set('internal_nodes_separated', $internal_nodes_separated);
+
+        return $item;
+    }
+}
+
+class FormatTeachersNodeInternalNodeItemProcessor implements ItemProcessorInterface {
+
+    use Configurable;
+
+    public function processItem( ItemInterface $item ): ItemInterface {
+
+        $item['internal_nodes_separated'] = array_map(function($internal_node_separated) {
+
+            $internal_node_separated['teachers'] = array_map(
+                fn ( $teacher ) => $this->getProperTeacherFormat( $teacher ),
+                $internal_node_separated['teachers']
+            );
+
+            return $internal_node_separated;
+        }, $item['internal_nodes_separated']);
+
+        return $item;
+    }
+
+    private function getProperTeacherFormat(string $teacherWithLink): Teacher{
+
+        $node = new Crawler($teacherWithLink);
+
+        $link = $this->getProfileUrl( $node );
+
+        $name = trim($node->text());
+        $name = str_replace(' ', '', $name);
+
+        $teacher = new Teacher();
+
+        $teacher->name = $name;
+
+        $teacher->profile = $link;
+
+        return $teacher;
+    }
+
+    private function getProfileUrl( Crawler $profileLink ): ?string {
+
+        try {
+
+            $profileLink = $profileLink->filter('a');
+
+            return $profileLink->attr( 'href' );
+
+        } catch ( Exception $e){
+
+            Log::debug($e->getMessage());
+
+            return null;
+        }
+    }
+}
+
+class SaveTeacherItemProcessor implements ItemProcessorInterface {
+
+    use Configurable;
+
+    public function processItem( ItemInterface $item ): ItemInterface {
+
+        foreach ($item['internal_nodes_separated'] as $internalNodesSeparated){
+
+            foreach ($internalNodesSeparated['teachers'] as $t){
+
+                if (\UnipvLectures\Models\Teacher::exists($t->name, $t->profile))
+                    continue;
+
+                $teacher = new \UnipvLectures\Models\Teacher();
+
+                $teacher->name = $t->name;
+                $teacher->profile = $t->profile;
+                $teacher->email = "";
+
+                $teacher->save();
+
+            }
+        }
+
+        return $item;
+    }
+}
+
+class SaveLessonItemProcessor implements ItemProcessorInterface{
+
+    use Configurable;
+
+    public function processItem( ItemInterface $item ): ItemInterface {
+
+        foreach ( $item['internal_nodes_separated'] as $internalNodesSeparated ) {
+
+            $className = $internalNodesSeparated['class_name'];
+
+            if ( ! Course::exists( $className ) ) {
+
+                $this->createLesson( $className );
+
+            }
+
+            $lesson = Course::getOne( $className );
+
+            $teachers = $this->getTeachers( $internalNodesSeparated['teachers'] );
+
+            foreach ($teachers as $t){
+
+                if (TeacherCourse::exists($t->id, $lesson->id))
+                    continue;
+
+                $this->createTeacherLesson( $lesson, $t );
+            }
+        }
+
+        return $item;
+    }
+
+    private function getTeachers( array $t ): array {
+
+        return array_map( fn( $t ) => \UnipvLectures\Models\Teacher::getOneByNameAndProfile( $t->name, $t->profile ), $t );
+
+    }
+
+    private function createLesson( mixed $className ): void {
+
+        Course::create( $className );
+
+    }
+
+    private function createTeacherLesson( ?Course $lessonItem, mixed $t ): void {
+
+        $teacherLesson = new TeacherCourse();
+
+        $teacherLesson->course_id  = $lessonItem->id;
+        $teacherLesson->teacher_id = $t->id;
+
+        $teacherLesson->save();
+
+    }
+}
+
+class Teacher {
+
+    public string $name;
+
+    public string | null $profile;
+
 }

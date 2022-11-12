@@ -1,6 +1,6 @@
 <?php
 
-namespace UnipvLecturers\Spiders;
+namespace UnipvLectures\Spiders;
 
 use Generator;
 use RoachPHP\Extensions\LoggerExtension;
@@ -31,7 +31,7 @@ class UniPvEngineeringTeacherEmailSpider extends BasicSpider
     {
         $requests = [];
 
-        $teachers = \UnipvLecturers\Models\Teacher::whereNotNull('profile')->get();
+        $teachers = \UnipvLectures\Models\Teacher::whereNotNull('profile')->get();
 
         foreach ($teachers as $t){
 
@@ -72,7 +72,7 @@ class UpdateEmailOnTeacherItemProcessor implements ItemProcessorInterface{
 
     public function processItem( ItemInterface $item ): ItemInterface {
 
-        $teacher = \UnipvLecturers\Models\Teacher::getOneByProfile( $item['uri'] );
+        $teacher = \UnipvLectures\Models\Teacher::getOneByProfile( $item['uri'] );
 
         if ( $teacher->email !== $item['email'] ) {
 

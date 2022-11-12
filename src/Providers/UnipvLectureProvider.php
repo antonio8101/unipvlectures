@@ -1,14 +1,12 @@
 <?php
 
-namespace UnipvLecturers\Providers;
+namespace UnipvLectures\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use UnipvLecturers\Commands\RunLecturerDataImport;
+use UnipvLectures\Commands\RunLecturerDataImport;
 
-class UnipvLecturerProvider extends ServiceProvider
+class UnipvLectureProvider extends ServiceProvider
 {
-    public const _UNIPV_LECTURERS_TEMPLATE_ = "UNIPV_LECTURERS_TEMPLATE";
-
     protected array $package_commands = [
         RunLecturerDataImport::class
     ];
@@ -31,10 +29,10 @@ class UnipvLecturerProvider extends ServiceProvider
     public function boot(): void {
 
         $this->publishes([
-            __DIR__.'/../Config/unipvlecturers.php' => config_path('unipvlecturers.php')
+            __DIR__.'/../Config/unipvlectures.php' => config_path('unipvlectures.php')
         ]);
 
-        $this->loadRoutesFrom(__DIR__.'/../Routes/lecturers.php');
+        $this->loadRoutesFrom(__DIR__.'/../Routes/lectures.php');
         $this->loadMigrationsFrom(__DIR__.'/../Migrations');
     }
 }
