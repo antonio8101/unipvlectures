@@ -39,8 +39,7 @@ Go to the file ```config/app.php```.
 
 ```
 
-
-After package assets are published, migration should be run.
+After service provider is configured, and package assets are published, migration should be run.
 
 ```bash
 
