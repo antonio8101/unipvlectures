@@ -1,8 +1,5 @@
 <?php
 
-
-use UnipvLecturers\Providers\UnipvLecturerProvider;
-
 return [
 
     /*
