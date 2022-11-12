@@ -2,6 +2,7 @@
 
 namespace UnipvLecturers\Commands;
 
+use Closure;
 use Illuminate\Console\Command;
 use RoachPHP\Roach;
 use UnipvLecturers\Models\Lecturer;
@@ -19,40 +20,52 @@ class RunLecturerDataImport extends Command
      *
      * @var string
      */
-    protected $signature = 'unipv:lecturer-import';
+    protected string $signature = 'unipv:lecturer-import {--R|refresh}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Run spiders to get data of courses from engineering courses..';
+    protected string $description = 'Run spiders to get data of courses from engineering courses..';
 
     /**
      * Execute the console command.
      *
      * @return int
      */
-    public function handle()
-    {
-        $this->info('START | cleaning DB.....');
-        $this->truncateTables();
-        $this->info('END | cleaning DB.....');
+    public function handle(): int {
 
-        $this->info('START | import classes.....');
-        Roach::startSpider(UniPvEngineeringClassesSpider::class);
-        $this->info('END | import classes.....');
+	    $refreshOption = $this->argument('refresh');
 
-        $this->info('START | import teacher email.....');
-        Roach::startSpider(UniPvEngineeringTeacherEmailSpider::class);
-        $this->info('END | import teacher email.....');
+		$skipCleaningOperation = $refreshOption;
 
-        $this->info('START | import lecturers.....');
-        Roach::startSpider(UniPvEngineeringCoursesSpider::class);
-        $this->info('END | import lecturers.....');
+	    $this->execute('cleaning DB', fn () => $this->truncateTables() , $skipCleaningOperation);
+
+		$this->execute('import classes', fn () => Roach::startSpider(UniPvEngineeringClassesSpider::class) );
+
+		$this->execute('import teacher email', fn () => Roach::startSpider(UniPvEngineeringTeacherEmailSpider::class));
+
+	    $this->execute('import lecturers', fn () => Roach::startSpider(UniPvEngineeringCoursesSpider::class));
 
         return Command::SUCCESS;
     }
+
+	private function execute(string $operation, Closure $operationCallback, bool $skip = false): void{
+
+		if ($skip) {
+
+			$this->info("SKIPPING | $operation.....");
+
+			return;
+		}
+
+		$this->info("START | $operation.....");
+
+		$operationCallback();
+
+		$this->info("END | $operation.....");
+	}
 
     private function truncateTables(){
 
