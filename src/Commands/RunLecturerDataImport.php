@@ -35,7 +35,7 @@ class RunLecturerDataImport extends Command {
 	 */
 	public function handle() {
 
-		$refreshOption = $this->argument( 'refresh' );
+		$refreshOption = $this->option('refresh');;
 
 		$skipCleaningOperation = $refreshOption;
 
