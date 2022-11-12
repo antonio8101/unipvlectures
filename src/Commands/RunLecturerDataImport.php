@@ -35,9 +35,9 @@ class RunLecturerDataImport extends Command {
 	 */
 	public function handle() {
 
-		$refreshOption = $this->option('refresh');;
+		$refreshOption = $this->option('refresh');
 
-		$skipCleaningOperation = $refreshOption;
+		$skipCleaningOperation = $refreshOption == 1;
 
 		$this->executeOperation( 'cleaning DB', fn() => $this->truncateTables(), $skipCleaningOperation );
 
