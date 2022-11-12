@@ -39,18 +39,18 @@ class RunLecturerDataImport extends Command {
 
 		$skipCleaningOperation = $refreshOption;
 
-		$this->execute( 'cleaning DB', fn() => $this->truncateTables(), $skipCleaningOperation );
+		$this->executeOperation( 'cleaning DB', fn() => $this->truncateTables(), $skipCleaningOperation );
 
-		$this->execute( 'import classes', fn() => Roach::startSpider( UniPvEngineeringClassesSpider::class ) );
+		$this->executeOperation( 'import classes', fn() => Roach::startSpider( UniPvEngineeringClassesSpider::class ) );
 
-		$this->execute( 'import teacher email', fn() => Roach::startSpider( UniPvEngineeringTeacherEmailSpider::class ) );
+		$this->executeOperation( 'import teacher email', fn() => Roach::startSpider( UniPvEngineeringTeacherEmailSpider::class ) );
 
-		$this->execute( 'import lecturers', fn() => Roach::startSpider( UniPvEngineeringCoursesSpider::class ) );
+		$this->executeOperation( 'import lecturers', fn() => Roach::startSpider( UniPvEngineeringCoursesSpider::class ) );
 
 		return Command::SUCCESS;
 	}
 
-	private function execute( string $operation, Closure $operationCallback, bool $skip = false ): void {
+	private function executeOperation( string $operation, Closure $operationCallback, bool $skip = false ): void {
 
 		if ( $skip ) {
 
