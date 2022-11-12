@@ -19,21 +19,21 @@ class RunLecturerDataImport extends Command {
 	 *
 	 * @var string
 	 */
-	protected string $signature = 'unipv:lecturer-import {--R|refresh}';
+	protected $signature = 'unipv:lecturer-import {--R|refresh}';
 
 	/**
 	 * The console command description.
 	 *
 	 * @var string
 	 */
-	protected string $description = 'Run spiders to get data of courses from engineering courses..';
+	protected $description = 'Run spiders to get data of courses from engineering courses..';
 
 	/**
 	 * Execute the console command.
 	 *
 	 * @return int
 	 */
-	public function handle(): int {
+	public function handle() {
 
 		$refreshOption = $this->argument( 'refresh' );
 
@@ -66,7 +66,7 @@ class RunLecturerDataImport extends Command {
 		$this->info( "END | $operation....." );
 	}
 
-	private function truncateTables() {
+	private function truncateTables(): void {
 
 		TeacherLesson::removeConstraints();
 		Lecturer::removeConstraints();
