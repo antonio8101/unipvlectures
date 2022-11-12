@@ -14,7 +14,7 @@
     "extra": {
     "laravel": {
         "providers": [
-            "UnipvLecturers\\Providers\\UnipvLecturerProvider"
+            "Unipvlectures\\Providers\\UnipvLecturerProvider"
         ]
     }
     },
