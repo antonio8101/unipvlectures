@@ -21,7 +21,6 @@ class UnipvLecturerProvider extends ServiceProvider
     public function register(): void {
 
         $this->commands($this->package_commands);
-
     }
 
     /**
