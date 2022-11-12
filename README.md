@@ -5,7 +5,7 @@ This package allows to retrieve data from the engineering websites of the Univer
 
 ### Installation
 
-```bash
+```console
 
 composer require abruno/unipvlectures  
 
@@ -13,7 +13,7 @@ composer require abruno/unipvlectures
 
 Once the package is installed package assets must be published by using the artisan command ``` vendor:publish ```
 
-```bash
+```console
 
 php artisan vendor:publish --provider UnipvLecturers\Providers\UnipvLecturerProvider
 
@@ -41,7 +41,7 @@ Go to the file ```config/app.php```.
 
 After service provider is configured, and package assets are published, migration should be run.
 
-```bash
+```console
 
 php artisan migrate
 
@@ -50,7 +50,7 @@ php artisan migrate
 Migration will create ```lectures, lessons, teachers, teacher_lessons``` in your database.
 Once table are created command ```unipv:import-lectures``` must be called.
 
-```bash
+```console
 
 php artisan unipv:import-lectures
 
