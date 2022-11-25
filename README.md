@@ -15,7 +15,7 @@ Once the package is installed package assets must be published by using the arti
 
 ```console
 
-php artisan vendor:publish --provider UnipvLectures\Providers\UnipvLectureProvider
+php artisan vendor:publish --provider="UnipvLectures\Providers\UnipvLectureProvider"
 
 ```
 
