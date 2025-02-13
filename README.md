@@ -1,4 +1,4 @@
-# Unipv Engineering Lectures Laravel Package
+# Unipv Engineering Lectures - Laravel Package
 ##  unipv/lectures
 
 This package allows to retrieve data from the engineering websites of the University of Pavia.
